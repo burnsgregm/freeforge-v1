@@ -1,9 +1,15 @@
+import dotenv from 'dotenv';
+// Load environment variables immediately
+dotenv.config();
+
+console.log('🚀 [STARTUP] Motion Intelligence Grid API initiating...');
+console.log(`[STARTUP] Environment: ${process.env.NODE_ENV || 'development'}`);
+
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { connectDB } from './database';
 import { socketService } from './services/SocketService';
@@ -17,9 +23,6 @@ import anomaliesRouter from './routes/anomalies';
 import entitiesRouter from './routes/entities';
 import simulationRouter from './routes/simulation';
 import analyticsRouter from './routes/analytics';
-
-// Load environment variables
-dotenv.config();
 
 console.log('🚀 [STARTUP] Motion Intelligence Grid API initiating...');
 console.log(`[STARTUP] Environment: ${process.env.NODE_ENV || 'development'}`);
