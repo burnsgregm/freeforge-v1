@@ -1,0 +1,24 @@
+steps:
+  # Build API
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/motiongrid-api:latest', './server']
+    
+  # Build Simulation
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/motiongrid-simulation:latest', './simulation']
+    
+  # Build Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/motiongrid-frontend:latest', './frontend']
+
+  # Push Images
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/motiongrid-api:latest']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/motiongrid-simulation:latest']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/motiongrid-frontend:latest']
+
+
+options:
+  machineType: 'N1_HIGHCPU_8'

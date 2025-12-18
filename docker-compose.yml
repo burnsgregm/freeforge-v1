@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # MongoDB database
+  mongodb:
+    image: mongo:6
+    container_name: motiongrid-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: devpassword123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - motiongrid-network
+    command: --wiredTigerCacheSizeGB 1.5
+
+  # Redis (optional, for caching)
+  redis:
+    image: redis:7-alpine
+    container_name: motiongrid-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - motiongrid-network
+    command: redis-server --appendonly yes
+
+  # API Gateway (Node.js + Express + Socket.io)
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: development
+    container_name: motiongrid-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      MONGODB_URI: mongodb://admin:devpassword123@mongodb:27017/motiongrid?authSource=admin
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-key
+      SIMULATION_API_URL: http://simulation:8000
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./server/src:/app/src
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - motiongrid-network
+    command: npm run dev
+
+  # Simulation Engine (Python + FastAPI)
+  simulation:
+    build:
+      context: ./simulation
+      dockerfile: Dockerfile
+    container_name: motiongrid-simulation
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: 1
+      API_PORT: 8000
+      MONGODB_URI: mongodb://admin:devpassword123@mongodb:27017/motiongrid?authSource=admin
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./simulation/src:/app/src
+    depends_on:
+      - mongodb
+    networks:
+      - motiongrid-network
+    command: uvicorn src.api.server:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend (React SPA)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: motiongrid-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:3001
+      VITE_WS_URL: ws://localhost:3001
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+    networks:
+      - motiongrid-network
+    command: npm run dev
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+
+networks:
+  motiongrid-network:
+    driver: bridge
