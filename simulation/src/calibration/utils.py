@@ -1,4 +1,6 @@
 import numpy as np
+import random
+from datetime import datetime
 
 def generate_default_calibration():
     # Intrinsic (Camera)
@@ -21,6 +23,9 @@ def generate_default_calibration():
     lidar_to_camera = np.eye(4)
     lidar_to_camera[1, 3] = -0.1 # y-axis translation
     
+    # Realistic Values (Randomized)
+    quality = 85 + random.uniform(-5, 10)  # 80-95% range
+    
     return {
         'intrinsic': {
             'cameraMatrix': camera_matrix,
@@ -31,16 +36,11 @@ def generate_default_calibration():
             'translationVector': translation
         },
         'lidarToCameraTransform': lidar_to_camera.tolist(),
-        'calibrationQuality': 100,
-        'calibratedAt': '2025-12-16T12:00:00Z'
+        'calibrationQuality': round(quality, 1),
+        'calibratedAt': datetime.now().isoformat(),
+        'driftRate': round(random.uniform(0.1, 0.5), 3)
     }
 
 def generate_realistic_calibration():
-    # Add realistic error and degradation (85-95%)
-    quality = 85 + random.uniform(-5, 10)
-    
-    return {
-        'calibrationQuality': quality,
-        'calibratedAt': datetime.now().isoformat(),
-        'driftRate': random.uniform(0.1, 0.5),  # % per hour
-    }
+    """Deprecated: Logic merged into generate_default_calibration"""
+    return generate_default_calibration()

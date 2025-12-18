@@ -8,8 +8,8 @@ import mongoose from 'mongoose';
 import { connectDB } from './database';
 import { socketService } from './services/SocketService';
 import { authenticate as authMiddleware } from './middleware/auth';
+import rateLimit from 'express-rate-limit';
 
-// Import routes at the top as per best practices
 import authRouter from './routes/auth';
 import nodesRouter from './routes/nodes';
 import sessionsRouter from './routes/sessions';
@@ -35,7 +35,7 @@ httpServer.listen(PORT, () => {
 
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.CLIENT_URL || '*',
+        origin: process.env.CLIENT_URL || '*', // WebSocket CORS
         methods: ['GET', 'POST'],
     },
 });
@@ -43,8 +43,23 @@ const io = new Server(httpServer, {
 // Initialize SocketService
 socketService.init(io);
 
-// Middleware
-app.use(cors());
+// SECURITY MIDDLEWARE
+// 1. Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100, // Limit each IP to 100 requests per window
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+});
+app.use(limiter);
+
+app.use(cors({
+    origin: process.env.CLIENT_URL || '*', // In production, set CLIENT_URL to your exact frontend domain
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// 3. Helmet headers
 app.use(helmet());
 app.use(express.json());
 

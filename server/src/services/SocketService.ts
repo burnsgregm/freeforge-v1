@@ -23,7 +23,10 @@ class SocketService {
             try {
                 const secret = process.env.JWT_SECRET;
                 if (!secret) {
-                    console.error('❌ CRITICAL: JWT_SECRET environment variable is missing! Falling back to dev secret (INSECURE)');
+                    if (process.env.NODE_ENV === 'production') {
+                        throw new Error('CRITICAL: JWT_SECRET environment variable is missing in production!');
+                    }
+                    console.warn('⚠️ Using dev JWT secret - NOT FOR PRODUCTION');
                 }
                 const decoded = jwt.verify(token as string, secret || 'dev_secret_do_not_use_in_prod');
                 (socket as any).user = decoded;
